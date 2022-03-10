@@ -54,7 +54,7 @@ static void bthread_loop_test(int thread_n) {
       "launch {} threads to multiply a vector to a scalar, end-to-end cost {} us\n",
       thread_n, run_us);
 }
-static void bthread_ctx_switch_test(int thread_n) {
+static void bthread_ctx_switch_test(int thread_n, uint64_t) {
   // TODO 参考Imbench
 }
 static void bthread_long_callback_test(int thread_n) {

@@ -19,7 +19,7 @@ struct Utils {
 struct Benchmark {
   void (*create_join_test)(int thread_n);
   void (*loop_test)(int thread_n);
-  void (*ctx_switch_test)(int thread_n);
+  void (*ctx_switch_test)(int thread_n, uint64_t switch_n);
   void (*long_callback_test)(int thread_n);
 };
 // global definitions end

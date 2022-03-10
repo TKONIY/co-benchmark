@@ -4,5 +4,5 @@
 #include <iostream>
 extern Benchmark benchmark;
 int main() {
-  benchmark.create_join_test(1);
+  benchmark.ctx_switch_test(1, 100000);
 }

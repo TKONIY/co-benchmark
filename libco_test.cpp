@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cassert>
 #include <fmt/core.h>
+#include <iostream>
 #include <libco/co_routine.h>
 #include <vector>
 
@@ -61,8 +62,33 @@ static void libco_loop_test(int coroutine_n) {
       coroutine_n, run_us);
 }
 
-static void libco_ctx_switch_test(int coroutine_n) {
-  // TODO
+void *f_switch(void *switch_n) {
+  auto switch_left = (uint64_t)switch_n;
+  while (switch_left--) {
+    co_yield_ct();
+  }
+  return nullptr;
+}
+
+static void libco_ctx_switch_test(int coroutine_n, uint64_t switch_n) {
+  // create one coroutine and keep switching into it.
+  stCoRoutine_t *co;
+  co_create(&co, nullptr, f_switch, (void *)switch_n);
+
+  auto switch_before = clk::now();
+
+  auto switch_left = switch_n;
+  while (switch_left--) {
+    co_resume(co);
+  }
+
+  auto switch_after = clk::now();
+  auto switch_duration = switch_after - switch_before;
+  auto switch_us = std::chrono::duration_cast<us>(switch_duration).count();
+  co_release(co);
+
+  fmt::print("launch 1 coroutines, switch in-and-out {} times, cost {} us.\n",
+             (uint64_t)switch_n, switch_us);
 }
 
 static void libco_long_callback_test(int coroutine_n) {

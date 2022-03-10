@@ -57,7 +57,7 @@ static void pthread_loop_test(int thread_n) {
       thread_n, run_us);
 }
 
-static void pthread_ctx_switch_test(int thread_n) {}
+static void pthread_ctx_switch_test(int thread_n, uint64_t) {}
 
 static void pthread_long_callback_test(int thread_n) {
   // TODO

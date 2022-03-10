@@ -79,7 +79,7 @@ void cpp20co_loop_test(int coroutine_n) {
       "launch {} coroutines to multiply a vector to a scalar, end-to-end cost {} us\n",
       coroutine_n, run_us);
 }
-void cpp20co_ctx_switch_test(int coroutine_n) {}
+void cpp20co_ctx_switch_test(int coroutine_n, uint64_t) {}
 void cpp20co_long_callback_test(int coroutine_n) {}
 // cpp20co end
 Benchmark benchmark{

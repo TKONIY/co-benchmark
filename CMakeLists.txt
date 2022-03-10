@@ -141,15 +141,19 @@ endif()
 
 
 find_library(LIBCO libcolib.a)
+find_library(LIBGO libgo)
 add_executable(benchmark_bthread benchmark.cpp bthread_test.cpp)
 add_executable(benchmark_pthread benchmark.cpp pthread_test.cpp)
 add_executable(benchmark_libco   benchmark.cpp libco_test.cpp)
 add_executable(benchmark_cpp20co benchmark.cpp cpp20co_test.cpp)
+add_executable(benchmark_libgo   benchmark.cpp libgo_test.cpp)
 
 target_link_libraries(benchmark_bthread ${BRPC_LIB} ${DYNAMIC_LIB} ${GPERFTOOLS_LIBRARIES})
 target_link_libraries(benchmark_pthread ${DYNAMIC_LIB} ${GPERFTOOLS_LIBRARIES})
 target_link_libraries(benchmark_libco   ${LIBCO} ${DYNAMIC_LIB} ${GPERFTOOLS_LIBRARIES} )
 target_link_libraries(benchmark_cpp20co ${DYNAMIC_LIB} ${GPERFTOOLS_LIBRARIES})
+target_link_libraries(benchmark_libgo   ${LIBGO} ${DYNAMIC_LIB} ${GPERFTOOLS_LIBRARIES})
+
 
 set_target_properties(benchmark_libco PROPERTIES CXX_STANDARD 11)
 set_target_properties(benchmark_cpp20co PROPERTIES CXX_STANDARD 20)
