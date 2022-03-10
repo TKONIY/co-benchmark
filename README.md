@@ -25,6 +25,7 @@ I'm not going to argue with anyone about the fucking confusing concepts of threa
 4. Modify `main()` in `benchmark.cpp`. One benchmark of all libraries will be provided in one build. 
 5. Build the project.
   ```shell
+  cd ThreadBenchmark
   mkdir build
   cd build
   cmake ..
