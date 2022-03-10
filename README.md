@@ -9,5 +9,5 @@ I'm not going to argue with anyone about the fucking confusing concepts of threa
 | create        | done    | done    | done  | done    |       |
 | join/resume   | done    | done    | done  | done    |       |
 | loop          | done    | done    | done  | done    |       |
-| ctx_switch    |         |         |       |         |       |
+| ctx_switch    |         |         | done  | done    |       |
 | long_callback |         |         |       |         |       |

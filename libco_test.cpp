@@ -30,6 +30,8 @@ static void libco_create_join_test(int coroutine_n) {
   auto resume_ns = std::chrono::duration_cast<ns>(resume_duration).count();
   fmt::print("resume {} coroutines, cost {} us, {} ns\n", coroutine_n, resume_us,
              resume_ns);
+
+  // TODO: need relaese
 }
 
 static void libco_loop_test(int coroutine_n) {
@@ -60,6 +62,8 @@ static void libco_loop_test(int coroutine_n) {
   fmt::print(
       "launch {} coroutines to multiply a vector to a scalar, end-to-end cost {} us\n",
       coroutine_n, run_us);
+
+  // TODO: need release
 }
 
 void *f_switch(void *switch_n) {
@@ -85,10 +89,11 @@ static void libco_ctx_switch_test(int coroutine_n, uint64_t switch_n) {
   auto switch_after = clk::now();
   auto switch_duration = switch_after - switch_before;
   auto switch_us = std::chrono::duration_cast<us>(switch_duration).count();
-  co_release(co);
 
   fmt::print("launch 1 coroutines, switch in-and-out {} times, cost {} us.\n",
              (uint64_t)switch_n, switch_us);
+             
+  co_release(co);
 }
 
 static void libco_long_callback_test(int coroutine_n) {
