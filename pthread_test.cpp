@@ -1,10 +1,12 @@
+#include "benchmark.h"
+#include <algorithm>
 #include <assert.h>
-#include <pthread.h>
 #include <chrono>
 #include <fmt/core.h>
 #include <iostream>
+#include <pthread.h>
 #include <vector>
-#include "benchmark.h"
+
 // pthread start
 static void pthread_create_join_test(int thread_n) {
   // Create thread_n threads
@@ -32,6 +34,9 @@ static void pthread_create_join_test(int thread_n) {
 
 static void pthread_loop_test(int thread_n) {
   std::vector<int> datas(thread_n, 10);
+  std::vector<int> results(thread_n);
+  std::transform(datas.begin(), datas.end(), results.begin(), Utils::op_mul<int>);
+
   std::vector<pthread_t> threads(thread_n);
 
   auto run_before = clk::now();
@@ -44,13 +49,15 @@ static void pthread_loop_test(int thread_n) {
   auto run_after = clk::now();
   auto run_duration = run_after - run_before;
   auto run_us = std::chrono::duration_cast<us>(run_duration).count();
+
+  assert(datas == results);
+
   fmt::print(
       "launch {} threads to multiply a vector to a scalar, end-to-end cost {} us\n",
       thread_n, run_us);
 }
 
-static void pthread_ctx_switch_test(int thread_n) {
-}
+static void pthread_ctx_switch_test(int thread_n) {}
 
 static void pthread_long_callback_test(int thread_n) {
   // TODO

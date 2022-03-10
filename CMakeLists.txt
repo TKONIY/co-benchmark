@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-cmake_minimum_required(VERSION 3.10.10)
+cmake_minimum_required(VERSION 3.20)
 project(benchmark C CXX)
 
 option(LINK_SO "Whether examples are linked dynamically" OFF)
@@ -88,17 +88,9 @@ set(CMAKE_CPP_FLAGS "${DEFINE_CLOCK_GETTIME} -DGFLAGS_NS=${GFLAGS_NS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CPP_FLAGS} -DNDEBUG -O2 -D__const__= -pipe -W -Wall -Wno-unused-parameter -fPIC -fno-omit-frame-pointer")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBRPC_ENABLE_CPU_PROFILER")
 
-if(CMAKE_VERSION VERSION_LESS "3.1.3")
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-    endif()
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-    endif()
-else()
-    set(CMAKE_CXX_STANDARD 11)
-    set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_path(LEVELDB_INCLUDE_PATH NAMES leveldb/db.h)
 find_library(LEVELDB_LIB NAMES leveldb)
@@ -147,13 +139,21 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 endif()
 
 
+
 find_library(LIBCO libcolib.a)
 add_executable(benchmark_bthread benchmark.cpp bthread_test.cpp)
 add_executable(benchmark_pthread benchmark.cpp pthread_test.cpp)
 add_executable(benchmark_libco   benchmark.cpp libco_test.cpp)
+add_executable(benchmark_cpp20co benchmark.cpp cpp20co_test.cpp)
+
 target_link_libraries(benchmark_bthread ${BRPC_LIB} ${DYNAMIC_LIB} ${GPERFTOOLS_LIBRARIES})
 target_link_libraries(benchmark_pthread ${DYNAMIC_LIB} ${GPERFTOOLS_LIBRARIES})
 target_link_libraries(benchmark_libco   ${LIBCO} ${DYNAMIC_LIB} ${GPERFTOOLS_LIBRARIES} )
+target_link_libraries(benchmark_cpp20co ${DYNAMIC_LIB} ${GPERFTOOLS_LIBRARIES})
+
+set_target_properties(benchmark_libco PROPERTIES CXX_STANDARD 11)
+set_target_properties(benchmark_cpp20co PROPERTIES CXX_STANDARD 20)
+target_compile_options(benchmark_cpp20co PUBLIC -fcoroutines)
 
 # add_executable(echo_client client.cpp ${PROTO_SRC} ${PROTO_HEADER})
 # add_executable(echo_server server.cpp ${PROTO_SRC} ${PROTO_HEADER})

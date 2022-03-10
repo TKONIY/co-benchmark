@@ -32,6 +32,9 @@ static void bthread_loop_test(int thread_n) {
   // For each element in data vector
   // create a thread to do multiply
   std::vector<int> datas(thread_n, 10);
+  std::vector<int> results(thread_n);
+  std::transform(datas.begin(), datas.end(), results.begin(), Utils::op_mul<int>);
+
   std::vector<bthread_t> threads(thread_n);
 
   auto run_before = clk::now();
@@ -44,6 +47,9 @@ static void bthread_loop_test(int thread_n) {
   auto run_after = clk::now();
   auto run_duration = run_after - run_before;
   auto run_us = std::chrono::duration_cast<us>(run_duration).count();
+
+  assert(datas == results);
+
   fmt::print(
       "launch {} threads to multiply a vector to a scalar, end-to-end cost {} us\n",
       thread_n, run_us);

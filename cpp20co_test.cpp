@@ -1,16 +1,33 @@
 #include "benchmark.h"
-#include <algorithm>
-#include <fmt/core.h>
-#include <libco/co_routine.h>
-#include <vector>
 #include <cassert>
+#include <coroutine>
+#include <fmt/core.h>
+#include <memory>
+#include <vector>
 
-static void libco_create_join_test(int coroutine_n) {
-  // create coroutine_n coroutines
-  std::vector<stCoRoutine_t *> coroutines(coroutine_n);
+// the same semantic as libco
+struct promise;
+struct coroutine : std::coroutine_handle<promise> {
+  using promise_type = struct promise;
+};
+
+struct promise {
+  coroutine get_return_object() { return {coroutine::from_promise(*this)}; }
+  std::suspend_always initial_suspend() noexcept { return {}; }
+  std::suspend_never final_suspend() noexcept { return {}; }
+  void return_void() {}
+  void unhandled_exception() {}
+};
+
+void cpp20co_create_join_test(int coroutine_n) {
+  std::vector<coroutine> coroutines(coroutine_n);
+
   auto create_before = clk::now();
   for (auto &tid : coroutines) {
-    co_create(&tid, nullptr, Utils::f_null, nullptr);
+    tid = []() -> coroutine {
+      Utils::f_null(nullptr);
+      co_return;
+    }();
   }
   auto create_after = clk::now();
   auto create_duration = create_after - create_before;
@@ -19,7 +36,7 @@ static void libco_create_join_test(int coroutine_n) {
 
   auto resume_before = clk::now();
   for (auto &tid : coroutines) {
-    co_resume(tid);
+    tid.resume();
   }
   auto resume_after = clk::now();
   auto resume_duration = resume_after - resume_before;
@@ -27,16 +44,19 @@ static void libco_create_join_test(int coroutine_n) {
   fmt::print("resume {} coroutines, cost {} us\n", coroutine_n, resume_us);
 }
 
-static void libco_loop_test(int coroutine_n) {
+void cpp20co_loop_test(int coroutine_n) {
   std::vector<int> datas(coroutine_n, 10);
   std::vector<int> results(coroutine_n);
   std::transform(datas.begin(), datas.end(), results.begin(), Utils::op_mul<int>);
 
-  std::vector<stCoRoutine_t *> coroutines(coroutine_n);
+  std::vector<coroutine> coroutines(coroutine_n);
 
   auto run_before = clk::now();
   for (int i = 0; i < coroutine_n; ++i) {
-    co_create(&coroutines[i], nullptr, Utils::f_mul, &datas[i]);
+    coroutines[i] = [&]() -> coroutine {
+      Utils::f_mul(&datas[i]);
+      co_return;
+    }();
     // co_resume(coroutines[i]);
 
     // @notes:
@@ -44,7 +64,7 @@ static void libco_loop_test(int coroutine_n) {
     // since libco only runs in one CPU core.
   }
   for (auto &tid : coroutines) {
-    co_resume(tid);
+    tid.resume();
   }
   auto run_after = clk::now();
   auto run_duration = run_after - run_before;
@@ -56,18 +76,12 @@ static void libco_loop_test(int coroutine_n) {
       "launch {} coroutines to multiply a vector to a scalar, end-to-end cost {} us\n",
       coroutine_n, run_us);
 }
-
-static void libco_ctx_switch_test(int coroutine_n) {
-  // TODO
-}
-
-static void libco_long_callback_test(int coroutine_n) {
-  // TODO
-}
-
+void cpp20co_ctx_switch_test(int coroutine_n) {}
+void cpp20co_long_callback_test(int coroutine_n) {}
+// cpp20co end
 Benchmark benchmark{
-    libco_create_join_test,
-    libco_loop_test,
-    libco_ctx_switch_test,
-    libco_long_callback_test,
+    cpp20co_create_join_test,
+    cpp20co_loop_test,
+    cpp20co_ctx_switch_test,
+    cpp20co_long_callback_test,
 };

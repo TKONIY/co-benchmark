@@ -13,6 +13,7 @@ struct Utils {
     *static_cast<int *>(value) *= 10;
     return nullptr;
   }
+  template <typename T> static T op_mul(T value) { return value * 10; }
 };
 
 struct Benchmark {
