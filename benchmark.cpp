@@ -4,5 +4,5 @@
 #include <iostream>
 extern Benchmark benchmark;
 int main() {
-  benchmark.loop_test(1000);
+  benchmark.create_join_test(1);
 }

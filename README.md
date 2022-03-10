@@ -4,11 +4,10 @@ I'm not going to argue with anyone about the fucking confusing concepts of threa
 - [ ] Rewrite CMakeLists.txt to find brpc in system library.
 - [ ] Design benchmark for stackful and stackless seperately.
 ## Benchmarks
-
-|              | bthread | pthread | libco | cpp20co |
-| ------------ | ------- | ------- | ----- | ------- |
-| create       | done    | done    | done  | done    |
-| join/resume  | done    | done    | done  | done    |
-| loop         | done    | done    | done  | done    |
-| ctx_switch   |         |         |       |         |
-| long_callback |         |         |       |         |
+|               | bthread | pthread | libco | cpp20co | libgo |
+| ------------- | ------- | ------- | ----- | ------- | ----- |
+| create        | done    | done    | done  | done    |       |
+| join/resume   | done    | done    | done  | done    |       |
+| loop          | done    | done    | done  | done    |       |
+| ctx_switch    |         |         |       |         |       |
+| long_callback |         |         |       |         |       |

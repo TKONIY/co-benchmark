@@ -1,9 +1,9 @@
 #include "benchmark.h"
 #include <algorithm>
+#include <cassert>
 #include <fmt/core.h>
 #include <libco/co_routine.h>
 #include <vector>
-#include <cassert>
 
 static void libco_create_join_test(int coroutine_n) {
   // create coroutine_n coroutines
@@ -15,7 +15,9 @@ static void libco_create_join_test(int coroutine_n) {
   auto create_after = clk::now();
   auto create_duration = create_after - create_before;
   auto create_us = std::chrono::duration_cast<us>(create_duration).count();
-  fmt::print("create {} coroutines, cost {} us\n", coroutine_n, create_us);
+  auto create_ns = std::chrono::duration_cast<ns>(create_duration).count();
+  fmt::print("create {} coroutines, cost {} us, {} ns\n", coroutine_n, create_us,
+             create_ns);
 
   auto resume_before = clk::now();
   for (auto &tid : coroutines) {
@@ -24,7 +26,9 @@ static void libco_create_join_test(int coroutine_n) {
   auto resume_after = clk::now();
   auto resume_duration = resume_after - resume_before;
   auto resume_us = std::chrono::duration_cast<us>(resume_duration).count();
-  fmt::print("resume {} coroutines, cost {} us\n", coroutine_n, resume_us);
+  auto resume_ns = std::chrono::duration_cast<ns>(resume_duration).count();
+  fmt::print("resume {} coroutines, cost {} us, {} ns\n", coroutine_n, resume_us,
+             resume_ns);
 }
 
 static void libco_loop_test(int coroutine_n) {

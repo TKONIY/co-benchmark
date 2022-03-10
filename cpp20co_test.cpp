@@ -21,7 +21,6 @@ struct promise {
 
 void cpp20co_create_join_test(int coroutine_n) {
   std::vector<coroutine> coroutines(coroutine_n);
-
   auto create_before = clk::now();
   for (auto &tid : coroutines) {
     tid = []() -> coroutine {
@@ -32,7 +31,9 @@ void cpp20co_create_join_test(int coroutine_n) {
   auto create_after = clk::now();
   auto create_duration = create_after - create_before;
   auto create_us = std::chrono::duration_cast<us>(create_duration).count();
-  fmt::print("create {} coroutines, cost {} us\n", coroutine_n, create_us);
+  auto create_ns = std::chrono::duration_cast<ns>(create_duration).count();
+  fmt::print("create {} coroutines, cost {} us, {} ns\n", coroutine_n, create_us,
+             create_ns);
 
   auto resume_before = clk::now();
   for (auto &tid : coroutines) {
@@ -41,7 +42,9 @@ void cpp20co_create_join_test(int coroutine_n) {
   auto resume_after = clk::now();
   auto resume_duration = resume_after - resume_before;
   auto resume_us = std::chrono::duration_cast<us>(resume_duration).count();
-  fmt::print("resume {} coroutines, cost {} us\n", coroutine_n, resume_us);
+  auto resume_ns = std::chrono::duration_cast<ns>(resume_duration).count();
+  fmt::print("resume {} coroutines, cost {} us, {} ns\n", coroutine_n, resume_us,
+             resume_ns);
 }
 
 void cpp20co_loop_test(int coroutine_n) {
