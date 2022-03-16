@@ -1,4 +1,5 @@
 #include <chrono>
+#include <sys/sysinfo.h>
 // global definitions start
 using clk = std::chrono::system_clock;
 using ms = std::chrono::milliseconds;
@@ -28,6 +29,10 @@ struct Utils {
       value = value * 10;
     }
     return value;
+  }
+
+  static int n_cpu() {
+    return get_nprocs();
   }
 };
 

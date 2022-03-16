@@ -8,7 +8,7 @@ I'm not going to argue with anyone about the fucking confusing concepts of threa
 | ------------- | ------- | ------- | ----- | ------- | ----- |
 | create        | ✅       | ✅       | ✅     | ✅       | ✅     |
 | join/resume   | ✅       | ✅       | ✅     | ✅       | ✅     |
-| loop          | ✅       | ✅       | ✅     | ✅       |       |
+| loop          | ✅       | ✅       | ✅     | ✅       | ✅     |
 | ctx_switch    | ✅       | ✅       | ✅     | ✅       | ✅     |
 | long_callback |         |         |       |         |       |
 ## Getting Start
