@@ -134,7 +134,7 @@ static void pthread_ctx_switch_test(int thread_n, uint64_t switch_n) {
   auto switch_duration = switch_after - switch_before;
   auto switch_us = std::chrono::duration_cast<us>(switch_duration).count();
 
-  fmt::print("launch 1 threads, switch in-and-out {} times, cost {} us.\n",
+  fmt::print("launch {} threads, switch in-and-out {} times, cost {} us.\n", thread_n,
              (uint64_t)switch_n, switch_us);
 }
 
