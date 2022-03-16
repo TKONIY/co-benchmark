@@ -9,7 +9,7 @@ I'm not going to argue with anyone about the fucking confusing concepts of threa
 | create        | ✅       | ✅       | ✅     | ✅       | ✅     |
 | join/resume   | ✅       | ✅       | ✅     | ✅       | ✅     |
 | loop          | ✅       | ✅       | ✅     | ✅       |       |
-| ctx_switch    |         | ✅       | ✅     | ✅       | ✅     |
+| ctx_switch    | ✅       | ✅       | ✅     | ✅       | ✅     |
 | long_callback |         |         |       |         |       |
 ## Getting Start
 > ⚠️ Since I haven't figured out how to write the CMakeLists.txt for projects with brpc, current build configurations of this project are taken from `incubator-brpc/example/echo_c++`. Thus this project can only be place on the same dir. This will be fix as soon as possible.
