@@ -24,7 +24,7 @@ struct promise {
 };
 // coroutine semantic
 
-void cpp20co_create_join_test(int coroutine_n) {
+static void cpp20co_create_join_test(int coroutine_n) {
   std::vector<coroutine> coroutines(coroutine_n);
   auto create_before = clk::now();
   for (auto &tid : coroutines) {
@@ -54,17 +54,17 @@ void cpp20co_create_join_test(int coroutine_n) {
   // destroy by RAII
 }
 
-void cpp20co_loop_test(int coroutine_n) {
+static void cpp20co_loop_test_1(int coroutine_n) {
   std::vector<int> datas(coroutine_n, 10);
   std::vector<int> results(coroutine_n);
-  std::transform(datas.begin(), datas.end(), results.begin(), Utils::op_mul<int>);
+  std::transform(datas.begin(), datas.end(), results.begin(), Utils::op_mul_1<int>);
 
   std::vector<coroutine> coroutines(coroutine_n);
 
   auto run_before = clk::now();
   for (int i = 0; i < coroutine_n; ++i) {
     coroutines[i] = [&]() -> coroutine {
-      Utils::f_mul(&datas[i]);
+      Utils::f_mul_1(&datas[i]);
       co_return;
     }();
     // co_resume(coroutines[i]);
@@ -87,7 +87,41 @@ void cpp20co_loop_test(int coroutine_n) {
       coroutine_n, run_us);
 }
 
-void cpp20co_ctx_switch_test(int coroutine_n, uint64_t switch_n) {
+static void cpp20co_loop_test_2(int coroutine_n) {
+  std::vector<int> datas(coroutine_n, 10);
+  // std::vector<int> results(coroutine_n);
+  // std::transform(datas.begin(), datas.end(), results.begin(),
+  //                Utils::op_mul_1000000<int>);
+
+  std::vector<coroutine> coroutines(coroutine_n);
+
+  auto run_before = clk::now();
+  for (int i = 0; i < coroutine_n; ++i) {
+    coroutines[i] = [&]() -> coroutine {
+      Utils::f_mul_1000000(&datas[i]);
+      co_return;
+    }();
+    // co_resume(coroutines[i]);
+
+    // @notes:
+    // co_resume() can be put under or here, it's almost the same,
+    // since libco only runs in one CPU core.
+  }
+  for (auto &tid : coroutines) {
+    tid.resume();
+  }
+  auto run_after = clk::now();
+  auto run_duration = run_after - run_before;
+  auto run_us = std::chrono::duration_cast<us>(run_duration).count();
+
+  // assert(datas == results);
+
+  fmt::print(
+      "launch {} coroutines to multiply a vector to a scalar, end-to-end cost {} us\n",
+      coroutine_n, run_us);
+}
+
+static void cpp20co_ctx_switch_test(int coroutine_n, uint64_t switch_n) {
   auto co = [](uint64_t switch_n) -> coroutine {
     while (switch_n--) {
       co_await std::suspend_always{};
@@ -112,11 +146,9 @@ void cpp20co_ctx_switch_test(int coroutine_n, uint64_t switch_n) {
   // co destroyed by RAII
 }
 
-void cpp20co_long_callback_test(int coroutine_n) {}
+static void cpp20co_long_callback_test(int coroutine_n) {}
 // cpp20co end
 Benchmark benchmark{
-    cpp20co_create_join_test,
-    cpp20co_loop_test,
-    cpp20co_ctx_switch_test,
-    cpp20co_long_callback_test,
+    cpp20co_create_join_test, cpp20co_loop_test_1,        cpp20co_loop_test_2,
+    cpp20co_ctx_switch_test,  cpp20co_long_callback_test,
 };

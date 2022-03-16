@@ -34,16 +34,16 @@ static void libco_create_join_test(int coroutine_n) {
   // TODO: need relaese
 }
 
-static void libco_loop_test(int coroutine_n) {
+static void libco_loop_test_1(int coroutine_n) {
   std::vector<int> datas(coroutine_n, 10);
   std::vector<int> results(coroutine_n);
-  std::transform(datas.begin(), datas.end(), results.begin(), Utils::op_mul<int>);
+  std::transform(datas.begin(), datas.end(), results.begin(), Utils::op_mul_1<int>);
 
   std::vector<stCoRoutine_t *> coroutines(coroutine_n);
 
   auto run_before = clk::now();
   for (int i = 0; i < coroutine_n; ++i) {
-    co_create(&coroutines[i], nullptr, Utils::f_mul, &datas[i]);
+    co_create(&coroutines[i], nullptr, Utils::f_mul_1, &datas[i]);
     // co_resume(coroutines[i]);
 
     // @notes:
@@ -66,7 +66,38 @@ static void libco_loop_test(int coroutine_n) {
   // TODO: need release
 }
 
-void *f_switch(void *switch_n) {
+static void libco_loop_test_2(int coroutine_n) {
+  std::vector<int> datas(coroutine_n, 10);
+  // std::vector<int> results(coroutine_n);
+  // std::transform(datas.begin(), datas.end(), results.begin(),
+  //                Utils::op_mul_1000000<int>);
+
+  std::vector<stCoRoutine_t *> coroutines(coroutine_n);
+
+  auto run_before = clk::now();
+  for (int i = 0; i < coroutine_n; ++i) {
+    co_create(&coroutines[i], nullptr, Utils::f_mul_1000000, &datas[i]);
+    // co_resume(coroutines[i]);
+
+    // @notes:
+    // co_resume() can be put under or here, it's almost the same,
+    // since libco only runs in one CPU core.
+  }
+  for (auto &tid : coroutines) {
+    co_resume(tid);
+  }
+  auto run_after = clk::now();
+  auto run_duration = run_after - run_before;
+  auto run_us = std::chrono::duration_cast<us>(run_duration).count();
+
+  assert(datas == results);
+
+  fmt::print(
+      "launch {} coroutines to multiply a vector to a scalar, end-to-end cost {} us\n",
+      coroutine_n, run_us);
+}
+
+static void *f_switch(void *switch_n) {
   auto switch_left = (uint64_t)switch_n;
   while (switch_left--) {
     co_yield_ct();
@@ -92,7 +123,7 @@ static void libco_ctx_switch_test(int coroutine_n, uint64_t switch_n) {
 
   fmt::print("launch 1 coroutines, switch in-and-out {} times, cost {} us.\n",
              (uint64_t)switch_n, switch_us);
-             
+
   co_release(co);
 }
 
@@ -101,8 +132,6 @@ static void libco_long_callback_test(int coroutine_n) {
 }
 
 Benchmark benchmark{
-    libco_create_join_test,
-    libco_loop_test,
-    libco_ctx_switch_test,
-    libco_long_callback_test,
+    libco_create_join_test, libco_loop_test_1,        libco_loop_test_2,
+    libco_ctx_switch_test,  libco_long_callback_test,
 };

@@ -140,8 +140,8 @@ endif()
 
 
 
-find_library(LIBCO libcolib.a)
-find_library(LIBGO libgo)
+find_library(LIBCO libcolib.a)      # Libco compiles static library by default.
+find_library(LIBGO libgo)           # Requires libgo compile with option -DBUILD_DYNAMIC=on.
 add_executable(benchmark_bthread benchmark.cpp bthread_test.cpp)
 add_executable(benchmark_pthread benchmark.cpp pthread_test.cpp)
 add_executable(benchmark_libco   benchmark.cpp libco_test.cpp)

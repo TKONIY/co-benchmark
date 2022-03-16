@@ -28,18 +28,18 @@ static void bthread_create_join_test(int thread_n) {
   auto join_us = std::chrono::duration_cast<us>(join_duration).count();
   fmt::print("join {} threads, cost {} us\n", thread_n, join_us);
 }
-static void bthread_loop_test(int thread_n) {
+static void bthread_loop_test_1(int thread_n) {
   // For each element in data vector
   // create a thread to do multiply
   std::vector<int> datas(thread_n, 10);
   std::vector<int> results(thread_n);
-  std::transform(datas.begin(), datas.end(), results.begin(), Utils::op_mul<int>);
+  std::transform(datas.begin(), datas.end(), results.begin(), Utils::op_mul_1<int>);
 
   std::vector<bthread_t> threads(thread_n);
 
   auto run_before = clk::now();
   for (int i = 0; i < thread_n; ++i) {
-    bthread_start_background(&threads[i], nullptr, Utils::f_mul, &datas[i]);
+    bthread_start_background(&threads[i], nullptr, Utils::f_mul_1, &datas[i]);
   }
   for (auto tid : threads) {
     bthread_join(tid, NULL);
@@ -54,6 +54,34 @@ static void bthread_loop_test(int thread_n) {
       "launch {} threads to multiply a vector to a scalar, end-to-end cost {} us\n",
       thread_n, run_us);
 }
+static void bthread_loop_test_2(int thread_n) {
+  // For each element in data vector
+  // create a thread to do multiply
+  std::vector<int> datas(thread_n, 10);
+  // std::vector<int> results(thread_n);
+  // std::transform(datas.begin(), datas.end(), results.begin(),
+  //                Utils::op_mul_1000000<int>);
+
+  std::vector<bthread_t> threads(thread_n);
+
+  auto run_before = clk::now();
+  for (int i = 0; i < thread_n; ++i) {
+    bthread_start_background(&threads[i], nullptr, Utils::f_mul_1000000, &datas[i]);
+  }
+  for (auto tid : threads) {
+    bthread_join(tid, NULL);
+  }
+  auto run_after = clk::now();
+  auto run_duration = run_after - run_before;
+  auto run_us = std::chrono::duration_cast<us>(run_duration).count();
+
+  // assert(datas == results);
+
+  fmt::print(
+      "launch {} threads to multiply a vector to a scalar, end-to-end cost {} us\n",
+      thread_n, run_us);
+}
+
 static void bthread_ctx_switch_test(int thread_n, uint64_t) {
   // TODO 参考Imbench
 }
@@ -62,8 +90,6 @@ static void bthread_long_callback_test(int thread_n) {
 }
 
 Benchmark benchmark{
-    bthread_create_join_test,
-    bthread_loop_test,
-    bthread_ctx_switch_test,
-    bthread_long_callback_test,
+    bthread_create_join_test, bthread_loop_test_1,        bthread_loop_test_2,
+    bthread_ctx_switch_test,  bthread_long_callback_test,
 };
