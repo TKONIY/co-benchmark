@@ -106,6 +106,8 @@ static void *f_switch(void *switch_n) {
 }
 
 static void libco_ctx_switch_test(int coroutine_n, uint64_t switch_n) {
+  assert(coroutine_n == 1);
+
   // create one coroutine and keep switching into it.
   stCoRoutine_t *co;
   co_create(&co, nullptr, f_switch, (void *)switch_n);

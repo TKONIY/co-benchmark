@@ -138,15 +138,15 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
         "-Wl,-U,_ProfilerStop")
 endif()
 
-
-
+set(SRC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 find_library(LIBCO libcolib.a)      # Libco compiles static library by default.
 find_library(LIBGO libgo)           # Requires libgo compile with option -DBUILD_DYNAMIC=on.
-add_executable(benchmark_bthread benchmark.cpp bthread_test.cpp)
-add_executable(benchmark_pthread benchmark.cpp pthread_test.cpp)
-add_executable(benchmark_libco   benchmark.cpp libco_test.cpp)
-add_executable(benchmark_cpp20co benchmark.cpp cpp20co_test.cpp)
-add_executable(benchmark_libgo   benchmark.cpp libgo_test.cpp)
+add_executable(benchmark_bthread ${SRC}/benchmark.cpp ${SRC}/bthread_test.cpp)
+add_executable(benchmark_pthread ${SRC}/benchmark.cpp ${SRC}/pthread_test.cpp)
+add_executable(benchmark_libco   ${SRC}/benchmark.cpp ${SRC}/libco_test.cpp)
+add_executable(benchmark_cpp20co ${SRC}/benchmark.cpp ${SRC}/cpp20co_test.cpp)
+add_executable(benchmark_libgo   ${SRC}/benchmark.cpp ${SRC}/libgo_test.cpp)
 
 target_link_libraries(benchmark_bthread ${BRPC_LIB} ${DYNAMIC_LIB} ${GPERFTOOLS_LIBRARIES})
 target_link_libraries(benchmark_pthread ${DYNAMIC_LIB} ${GPERFTOOLS_LIBRARIES})

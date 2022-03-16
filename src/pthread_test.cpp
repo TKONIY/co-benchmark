@@ -24,7 +24,7 @@ static void pthread_create_join_test(int thread_n) {
   // Join thread_n threads
   auto join_before = clk::now();
   for (auto tid : threads) {
-    pthread_join(tid, NULL);
+    pthread_join(tid, nullptr);
   }
   auto join_after = clk::now();
   auto join_duration = join_after - join_before;
@@ -44,7 +44,7 @@ static void pthread_loop_test_1(int thread_n) {
     pthread_create(&threads[i], nullptr, Utils::f_mul_1, &datas[i]);
   }
   for (auto tid : threads) {
-    pthread_join(tid, NULL);
+    pthread_join(tid, nullptr);
   }
   auto run_after = clk::now();
   auto run_duration = run_after - run_before;
@@ -70,7 +70,7 @@ static void pthread_loop_test_2(int thread_n) {
     pthread_create(&threads[i], nullptr, Utils::f_mul_1000000, &datas[i]);
   }
   for (auto tid : threads) {
-    pthread_join(tid, NULL);
+    pthread_join(tid, nullptr);
   }
   auto run_after = clk::now();
   auto run_duration = run_after - run_before;
@@ -83,7 +83,60 @@ static void pthread_loop_test_2(int thread_n) {
       thread_n, run_us);
 }
 
-static void pthread_ctx_switch_test(int thread_n, uint64_t) {}
+// ctx switch tests
+using time_point_t = decltype(clk::now());
+
+struct args_ctx_switch_t {
+  int thread_i;
+  uint64_t switch_n;
+  time_point_t *switch_befores;
+  time_point_t *switch_afters;
+};
+
+static void *f_ctx_switch(void *args) {
+  auto args_ctx = static_cast<args_ctx_switch_t *>(args);
+  auto thread_i = args_ctx->thread_i;
+  auto switch_n = args_ctx->switch_n;
+  auto switch_befores = args_ctx->switch_befores;
+  auto switch_afters = args_ctx->switch_afters;
+
+  switch_befores[thread_i] = clk::now();
+  while (switch_n--) {
+    pthread_yield();
+  }
+  switch_afters[thread_i] = clk::now();
+
+  return nullptr;
+}
+
+static void pthread_ctx_switch_test(int thread_n, uint64_t switch_n) {
+  // timers.
+  auto switch_befores = std::vector<time_point_t>(thread_n);
+  auto switch_afters = std::vector<time_point_t>(thread_n);
+
+  // args
+  auto args = std::vector<args_ctx_switch_t>(thread_n);
+  for (int i = 0; i < thread_n; ++i) {
+    args[i] = {i, switch_n, switch_befores.data(), switch_afters.data()};
+  }
+
+  // threads
+  auto threads = std::vector<pthread_t>(thread_n);
+  for (int i = 0; i < thread_n; ++i) {
+    pthread_create(&threads[i], nullptr, f_ctx_switch, &args[i]);
+  }
+  for (auto tid : threads) {
+    pthread_join(tid, nullptr);
+  }
+
+  auto switch_before = *std::min_element(switch_befores.begin(), switch_befores.end());
+  auto switch_after = *std::max_element(switch_afters.begin(), switch_afters.end());
+  auto switch_duration = switch_after - switch_before;
+  auto switch_us = std::chrono::duration_cast<us>(switch_duration).count();
+
+  fmt::print("launch 1 threads, switch in-and-out {} times, cost {} us.\n",
+             (uint64_t)switch_n, switch_us);
+}
 
 static void pthread_long_callback_test(int thread_n) {
   // TODO

@@ -122,6 +122,8 @@ static void cpp20co_loop_test_2(int coroutine_n) {
 }
 
 static void cpp20co_ctx_switch_test(int coroutine_n, uint64_t switch_n) {
+  assert(coroutine_n == 1);
+
   auto co = [](uint64_t switch_n) -> coroutine {
     while (switch_n--) {
       co_await std::suspend_always{};
