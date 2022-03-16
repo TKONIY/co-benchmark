@@ -107,7 +107,37 @@ static void libgo_loop_test_2(int coroutine_n) { // For each element in data vec
              coroutine_n, Utils::n_cpu(), run_us);
 }
 
-static void libgo_ctx_switch_test(int coroutine_n, uint64_t switch_n) {
+static void libgo_ctx_switch_test_1(uint64_t switch_n) {
+  using time_point_t = decltype(clk::now());
+  auto switch_before = time_point_t{};
+  auto switch_after = time_point_t{};
+
+  co_chan<int> ch;
+  go[=, &switch_before, &switch_after]() {
+    auto switch_left = switch_n;
+
+    switch_before = clk::now();
+    while (switch_left--) {
+      co_yield;
+    }
+    switch_after = clk::now();
+
+    ch << 1; // join
+  };
+
+  std::thread([]() { co_sched.Start(1); }).detach();
+
+  int join;
+  ch >> join;
+
+  auto switch_duration = switch_after - switch_before;
+  auto switch_us = std::chrono::duration_cast<us>(switch_duration).count();
+
+  fmt::print("launch 1 coroutines, switch in-and-out {} times, cost {} us.\n",
+             (uint64_t)switch_n, switch_us);
+}
+
+static void libgo_ctx_switch_test_2(int coroutine_n, uint64_t switch_n) {
   using time_point_t = decltype(clk::now());
   auto switch_befores = std::vector<time_point_t>(coroutine_n);
   auto switch_afters = std::vector<time_point_t>(coroutine_n);
@@ -142,11 +172,12 @@ static void libgo_ctx_switch_test(int coroutine_n, uint64_t switch_n) {
   fmt::print("launch {} coroutines, switch in-and-out {} times, cost {} us.\n",
              coroutine_n, (uint64_t)switch_n, switch_us);
 }
+
 static void libgo_long_callback_test(int coroutine_n) {
   // TODO 测试长尾
 }
 
 Benchmark benchmark{
-    libgo_create_join_test, libgo_loop_test_1,        libgo_loop_test_2,
-    libgo_ctx_switch_test,  libgo_long_callback_test,
+    libgo_create_join_test,  libgo_loop_test_1,       libgo_loop_test_2,
+    libgo_ctx_switch_test_1, libgo_ctx_switch_test_2, libgo_long_callback_test,
 };

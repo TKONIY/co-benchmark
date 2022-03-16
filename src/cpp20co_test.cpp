@@ -121,9 +121,7 @@ static void cpp20co_loop_test_2(int coroutine_n) {
       coroutine_n, run_us);
 }
 
-static void cpp20co_ctx_switch_test(int coroutine_n, uint64_t switch_n) {
-  assert(coroutine_n == 1);
-
+static void cpp20co_ctx_switch_test_1(uint64_t switch_n) {
   auto co = [](uint64_t switch_n) -> coroutine {
     while (switch_n--) {
       co_await std::suspend_always{};
@@ -148,9 +146,13 @@ static void cpp20co_ctx_switch_test(int coroutine_n, uint64_t switch_n) {
   // co destroyed by RAII
 }
 
+static void cpp20co_ctx_switch_test_2(int coroutine_n, uint64_t switch_n) {
+  throw std::runtime_error("Not implemented.\n");
+}
+
 static void cpp20co_long_callback_test(int coroutine_n) {}
-// cpp20co end
+
 Benchmark benchmark{
-    cpp20co_create_join_test, cpp20co_loop_test_1,        cpp20co_loop_test_2,
-    cpp20co_ctx_switch_test,  cpp20co_long_callback_test,
+    cpp20co_create_join_test,  cpp20co_loop_test_1,       cpp20co_loop_test_2,
+    cpp20co_ctx_switch_test_1, cpp20co_ctx_switch_test_2, cpp20co_long_callback_test,
 };

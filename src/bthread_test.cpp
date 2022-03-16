@@ -83,7 +83,6 @@ static void bthread_loop_test_2(int thread_n) {
 }
 
 // ctx switch tests
-// ctx switch tests
 using time_point_t = decltype(clk::now());
 
 struct args_ctx_switch_t {
@@ -109,8 +108,27 @@ static void *f_ctx_switch(void *args) {
   return nullptr;
 }
 
-static void bthread_ctx_switch_test(int thread_n, uint64_t switch_n) {
-  // TODO 参考Imbench
+static void bthread_ctx_switch_test_1(uint64_t switch_n) {
+  // timers.
+  auto switch_before = time_point_t{};
+  auto switch_after = time_point_t{};
+
+  // args
+  auto arg = args_ctx_switch_t{0, switch_n, &switch_before, &switch_after};
+
+  // thread
+  pthread_t tid{};
+  bthread_start_background(&tid, nullptr, f_ctx_switch, &arg);
+  bthread_join(tid, nullptr);
+
+  auto switch_duration = switch_after - switch_before;
+  auto switch_us = std::chrono::duration_cast<us>(switch_duration).count();
+
+  fmt::print("launch 1 threads, switch in-and-out {} times, cost {} us.\n",
+             (uint64_t)switch_n, switch_us);
+}
+
+static void bthread_ctx_test_2(int thread_n, uint64_t switch_n) {
   // timers.
   auto switch_befores = std::vector<time_point_t>(thread_n);
   auto switch_afters = std::vector<time_point_t>(thread_n);
@@ -138,11 +156,12 @@ static void bthread_ctx_switch_test(int thread_n, uint64_t switch_n) {
   fmt::print("launch {} threads, switch in-and-out {} times, cost {} us.\n", thread_n,
              (uint64_t)switch_n, switch_us);
 }
+
 static void bthread_long_callback_test(int thread_n) {
   // TODO 测试长尾
 }
 
 Benchmark benchmark{
-    bthread_create_join_test, bthread_loop_test_1,        bthread_loop_test_2,
-    bthread_ctx_switch_test,  bthread_long_callback_test,
+    bthread_create_join_test,  bthread_loop_test_1, bthread_loop_test_2,
+    bthread_ctx_switch_test_1, bthread_ctx_test_2,  bthread_long_callback_test,
 };

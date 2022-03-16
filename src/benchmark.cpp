@@ -3,4 +3,4 @@
 #include "benchmark.h"
 #include <iostream>
 extern Benchmark benchmark;
-int main() { benchmark.loop_test_1(100); }
+int main() { benchmark.ctx_switch_test_2(100, 100); }

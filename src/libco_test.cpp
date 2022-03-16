@@ -105,9 +105,7 @@ static void *f_switch(void *switch_n) {
   return nullptr;
 }
 
-static void libco_ctx_switch_test(int coroutine_n, uint64_t switch_n) {
-  assert(coroutine_n == 1);
-
+static void libco_ctx_switch_test_1(uint64_t switch_n) {
   // create one coroutine and keep switching into it.
   stCoRoutine_t *co;
   co_create(&co, nullptr, f_switch, (void *)switch_n);
@@ -129,11 +127,15 @@ static void libco_ctx_switch_test(int coroutine_n, uint64_t switch_n) {
   co_release(co);
 }
 
+static void libco_ctx_switch_test_2(int coroutine_n, uint64_t switch_n) {
+  fmt::print("Not Implemented.\n");
+}
+
 static void libco_long_callback_test(int coroutine_n) {
   // TODO
 }
 
 Benchmark benchmark{
-    libco_create_join_test, libco_loop_test_1,        libco_loop_test_2,
-    libco_ctx_switch_test,  libco_long_callback_test,
+    libco_create_join_test,  libco_loop_test_1,       libco_loop_test_2,
+    libco_ctx_switch_test_1, libco_ctx_switch_test_2, libco_long_callback_test,
 };
