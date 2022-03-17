@@ -120,7 +120,7 @@ static void pthread_ctx_switch_test_1(uint64_t switch_n) {
 
   // threads
   auto tid = pthread_t{};
-  pthread_create(&tid, nullptr, f_ctx_switch, &arg);
+  pthread_create(&tid, nullptr, f_ctx_switch, arg);
   pthread_join(tid, nullptr);
 
   auto switch_duration = *switch_after - *switch_before;

@@ -118,7 +118,7 @@ static void bthread_ctx_switch_test_1(uint64_t switch_n) {
 
   // thread
   pthread_t tid{};
-  bthread_start_background(&tid, nullptr, f_ctx_switch, &arg);
+  bthread_start_background(&tid, nullptr, f_ctx_switch, arg);
   bthread_join(tid, nullptr);
 
   auto switch_duration = *switch_after - *switch_before;
