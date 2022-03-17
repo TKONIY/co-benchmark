@@ -109,18 +109,18 @@ static void libgo_loop_test_2(int coroutine_n) { // For each element in data vec
 
 static void libgo_ctx_switch_test_1(uint64_t switch_n) {
   using time_point_t = decltype(clk::now());
-  auto switch_before = time_point_t{};
-  auto switch_after = time_point_t{};
+  auto switch_before = new time_point_t{};
+  auto switch_after = new time_point_t{};
 
   co_chan<int> ch;
-  go[=, &switch_before, &switch_after]() {
+  go[=]() {
     auto switch_left = switch_n;
 
-    switch_before = clk::now();
+    *switch_before = clk::now();
     while (switch_left--) {
       co_yield;
     }
-    switch_after = clk::now();
+    *switch_after = clk::now();
 
     ch << 1; // join
   };
@@ -130,21 +130,24 @@ static void libgo_ctx_switch_test_1(uint64_t switch_n) {
   int join;
   ch >> join;
 
-  auto switch_duration = switch_after - switch_before;
+  auto switch_duration = *switch_after - *switch_before;
   auto switch_us = std::chrono::duration_cast<us>(switch_duration).count();
 
   fmt::print("launch 1 coroutines, switch in-and-out {} times, cost {} us.\n",
              (uint64_t)switch_n, switch_us);
+
+  delete switch_before;
+  delete switch_after;
 }
 
 static void libgo_ctx_switch_test_2(int coroutine_n, uint64_t switch_n) {
   using time_point_t = decltype(clk::now());
-  auto switch_befores = std::vector<time_point_t>(coroutine_n);
-  auto switch_afters = std::vector<time_point_t>(coroutine_n);
+  auto switch_befores = new time_point_t[coroutine_n];
+  auto switch_afters = new time_point_t[coroutine_n];
 
   co_chan<int> ch;
   for (int i = 0; i < coroutine_n; ++i) {
-    go[=, &switch_befores, &switch_afters]() {
+    go[=]() {
       auto switch_left = switch_n;
 
       switch_befores[i] = clk::now();
@@ -164,13 +167,16 @@ static void libgo_ctx_switch_test_2(int coroutine_n, uint64_t switch_n) {
     ch >> join;
   }
 
-  auto switch_before = *std::min_element(switch_befores.begin(), switch_befores.end());
-  auto switch_after = *std::max_element(switch_afters.begin(), switch_afters.end());
+  auto switch_before = *std::min_element(switch_befores, switch_befores + coroutine_n);
+  auto switch_after = *std::max_element(switch_afters, switch_afters + coroutine_n);
   auto switch_duration = switch_after - switch_before;
   auto switch_us = std::chrono::duration_cast<us>(switch_duration).count();
 
   fmt::print("launch {} coroutines, switch in-and-out {} times, cost {} us.\n",
              coroutine_n, (uint64_t)switch_n, switch_us);
+
+  delete[] switch_befores;
+  delete[] switch_afters;
 }
 
 static void libgo_long_callback_test(int coroutine_n) {

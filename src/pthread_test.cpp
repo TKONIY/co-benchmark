@@ -112,33 +112,37 @@ static void *f_ctx_switch(void *args) {
 // not accurate !!!
 static void pthread_ctx_switch_test_1(uint64_t switch_n) {
   // timers.
-  auto switch_before = time_point_t{};
-  auto switch_after = time_point_t{};
+  auto switch_before = new time_point_t{};
+  auto switch_after = new time_point_t{};
 
   // args
-  auto arg = args_ctx_switch_t{0, switch_n, &switch_before, &switch_after};
+  auto arg = new args_ctx_switch_t{0, switch_n, switch_before, switch_after};
 
   // threads
   auto tid = pthread_t{};
   pthread_create(&tid, nullptr, f_ctx_switch, &arg);
   pthread_join(tid, nullptr);
 
-  auto switch_duration = switch_after - switch_before;
+  auto switch_duration = *switch_after - *switch_before;
   auto switch_us = std::chrono::duration_cast<us>(switch_duration).count();
 
   fmt::print("launch 1 threads, switch in-and-out {} times, cost {} us.\n",
              (uint64_t)switch_n, switch_us);
+
+  delete switch_before;
+  delete switch_after;
+  delete arg;
 }
 
 static void pthread_ctx_switch_test_2(int thread_n, uint64_t switch_n) {
   // timers.
-  auto switch_befores = std::vector<time_point_t>(thread_n);
-  auto switch_afters = std::vector<time_point_t>(thread_n);
+  auto switch_befores = new time_point_t[thread_n];
+  auto switch_afters = new time_point_t[thread_n];
 
   // args
-  auto args = std::vector<args_ctx_switch_t>(thread_n);
+  auto args = new args_ctx_switch_t[thread_n];
   for (int i = 0; i < thread_n; ++i) {
-    args[i] = {i, switch_n, switch_befores.data(), switch_afters.data()};
+    args[i] = {i, switch_n, switch_befores, switch_afters};
   }
 
   // threads
@@ -150,13 +154,17 @@ static void pthread_ctx_switch_test_2(int thread_n, uint64_t switch_n) {
     pthread_join(tid, nullptr);
   }
 
-  auto switch_before = *std::min_element(switch_befores.begin(), switch_befores.end());
-  auto switch_after = *std::max_element(switch_afters.begin(), switch_afters.end());
+  auto switch_before = *std::min_element(switch_befores, switch_befores + thread_n);
+  auto switch_after = *std::max_element(switch_afters, switch_afters + thread_n);
   auto switch_duration = switch_after - switch_before;
   auto switch_us = std::chrono::duration_cast<us>(switch_duration).count();
 
   fmt::print("launch {} threads, switch in-and-out {} times, cost {} us.\n", thread_n,
              (uint64_t)switch_n, switch_us);
+
+  delete[] switch_befores;
+  delete[] switch_afters;
+  delete[] args;
 }
 
 static void pthread_long_callback_test(int thread_n) {

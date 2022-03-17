@@ -110,33 +110,37 @@ static void *f_ctx_switch(void *args) {
 
 static void bthread_ctx_switch_test_1(uint64_t switch_n) {
   // timers.
-  auto switch_before = time_point_t{};
-  auto switch_after = time_point_t{};
+  auto switch_before = new time_point_t{};
+  auto switch_after = new time_point_t{};
 
   // args
-  auto arg = args_ctx_switch_t{0, switch_n, &switch_before, &switch_after};
+  auto arg = new args_ctx_switch_t{0, switch_n, switch_before, switch_after};
 
   // thread
   pthread_t tid{};
   bthread_start_background(&tid, nullptr, f_ctx_switch, &arg);
   bthread_join(tid, nullptr);
 
-  auto switch_duration = switch_after - switch_before;
+  auto switch_duration = *switch_after - *switch_before;
   auto switch_us = std::chrono::duration_cast<us>(switch_duration).count();
 
   fmt::print("launch 1 threads, switch in-and-out {} times, cost {} us.\n",
              (uint64_t)switch_n, switch_us);
+  
+  delete switch_before;
+  delete switch_after;
+  delete arg;
 }
 
 static void bthread_ctx_test_2(int thread_n, uint64_t switch_n) {
   // timers.
-  auto switch_befores = std::vector<time_point_t>(thread_n);
-  auto switch_afters = std::vector<time_point_t>(thread_n);
+  auto switch_befores = new time_point_t[thread_n];
+  auto switch_afters = new time_point_t[thread_n];
 
   // args
-  auto args = std::vector<args_ctx_switch_t>(thread_n);
+  auto args = new args_ctx_switch_t[thread_n];
   for (int i = 0; i < thread_n; ++i) {
-    args[i] = {i, switch_n, switch_befores.data(), switch_afters.data()};
+    args[i] = {i, switch_n, switch_befores, switch_afters};
   }
 
   // threads
@@ -148,20 +152,70 @@ static void bthread_ctx_test_2(int thread_n, uint64_t switch_n) {
     bthread_join(tid, nullptr);
   }
 
-  auto switch_before = *std::min_element(switch_befores.begin(), switch_befores.end());
-  auto switch_after = *std::max_element(switch_afters.begin(), switch_afters.end());
+  auto switch_before = *std::min_element(switch_befores, switch_befores + thread_n);
+  auto switch_after = *std::max_element(switch_afters, switch_afters + thread_n);
   auto switch_duration = switch_after - switch_before;
   auto switch_us = std::chrono::duration_cast<us>(switch_duration).count();
 
   fmt::print("launch {} threads, switch in-and-out {} times, cost {} us.\n", thread_n,
              (uint64_t)switch_n, switch_us);
+
+  delete[] switch_befores;
+  delete[] switch_afters;
+  delete[] args;
 }
 
-static void bthread_long_callback_test(int thread_n) {
-  // TODO 测试长尾
+// bthread start urgent test
+struct arg_urgent_t {
+  time_point_t urgent_start;
+};
+
+struct arg_worker_t {
+  time_point_t urgent_before;
+  time_point_t urgent_after;
+};
+
+static void *f_urgent(void *arg) {
+  // fmt::print("urgent tid: {}\n", pthread_self());
+  auto urgent_start = clk::now();
+  // Block the pthread, then scheduler will steal bthread's on current TaskGroup to
+  // other pthread. Stealing won't happened if f_urgent finish quickly.
+  sleep(1);
+
+  static_cast<arg_urgent_t *>(arg)->urgent_start = urgent_start;
+  return nullptr;
+}
+
+static void *f_worker(void *arg) {
+  bthread_t tid{};
+  // fmt::print("worker tid before bthread_start_urgent(): {}\n", pthread_self());
+  auto urgent_before = clk::now();
+  bthread_start_urgent(&tid, nullptr, f_urgent, nullptr);
+  auto urgent_after = clk::now();
+  // fmt::print("worker tid after bthread_start_urgent(): {}\n", pthread_self());
+  bthread_join(tid, nullptr);
+
+  static_cast<arg_worker_t *>(arg)->urgent_before = urgent_before;
+  static_cast<arg_worker_t *>(arg)->urgent_after = urgent_after;
+  return nullptr;
+}
+
+static void bthread_start_urgent_test(int thread_n) {
+  // Start a thread to run on current kernel.
+  // The thread should be started in a worker thread, who have a thread-local,
+  // TaskGroup by calling bthread_start_urgent(). Otherwise it will create a new pthread
+  // to init TaskGroup, calling the same functixwon as bthread_start_background()
+  // called.
+
+  // arguments
+
+  bthread_t tid{};
+  // create a new TaskGroup to run f_worker
+  bthread_start_background(&tid, nullptr, f_worker, nullptr);
+  bthread_join(tid, nullptr);
 }
 
 Benchmark benchmark{
     bthread_create_join_test,  bthread_loop_test_1, bthread_loop_test_2,
-    bthread_ctx_switch_test_1, bthread_ctx_test_2,  bthread_long_callback_test,
+    bthread_ctx_switch_test_1, bthread_ctx_test_2,  bthread_start_urgent_test,
 };
