@@ -126,7 +126,7 @@ static void bthread_ctx_switch_test_1(uint64_t switch_n) {
 
   fmt::print("launch 1 threads, switch in-and-out {} times, cost {} us.\n",
              (uint64_t)switch_n, switch_us);
-  
+
   delete switch_before;
   delete switch_after;
   delete arg;
@@ -187,16 +187,19 @@ static void *f_urgent(void *arg) {
 }
 
 static void *f_worker(void *arg) {
+  auto arg_worker = static_cast<arg_worker_t *>(arg);
+  auto arg_urgent = static_cast<char *>(arg) + sizeof(arg_worker_t);
+
   bthread_t tid{};
   // fmt::print("worker tid before bthread_start_urgent(): {}\n", pthread_self());
   auto urgent_before = clk::now();
-  bthread_start_urgent(&tid, nullptr, f_urgent, nullptr);
+  bthread_start_urgent(&tid, nullptr, f_urgent, arg_urgent);
   auto urgent_after = clk::now();
   // fmt::print("worker tid after bthread_start_urgent(): {}\n", pthread_self());
   bthread_join(tid, nullptr);
 
-  static_cast<arg_worker_t *>(arg)->urgent_before = urgent_before;
-  static_cast<arg_worker_t *>(arg)->urgent_after = urgent_after;
+  arg_worker->urgent_before = urgent_before;
+  arg_worker->urgent_after = urgent_after;
   return nullptr;
 }
 
@@ -208,11 +211,25 @@ static void bthread_start_urgent_test(int thread_n) {
   // called.
 
   // arguments
+  auto arg_warp = new char[sizeof(arg_urgent_t) + sizeof(arg_worker_t)];
 
   bthread_t tid{};
   // create a new TaskGroup to run f_worker
-  bthread_start_background(&tid, nullptr, f_worker, nullptr);
+  bthread_start_background(&tid, nullptr, f_worker, arg_warp);
   bthread_join(tid, nullptr);
+
+  auto arg_worker = reinterpret_cast<arg_worker_t *>(arg_warp);
+  auto arg_urgent = reinterpret_cast<arg_urgent_t *>(arg_warp + sizeof(arg_worker_t));
+
+  auto urgent_duration = arg_urgent->urgent_start - arg_worker->urgent_before;
+  auto worker_duration = arg_worker->urgent_after - arg_worker->urgent_before;
+  auto urgent_us = std::chrono::duration_cast<us>(urgent_duration).count();
+  auto worker_us = std::chrono::duration_cast<us>(worker_duration).count();
+
+  fmt::print("cost {} us to swapp a new bthread in current pthread.\n", urgent_us);
+  fmt::print("cost {} us to schedule current bthread to another pthread.\n", worker_us);
+
+  delete[] arg_warp;
 }
 
 Benchmark benchmark{
