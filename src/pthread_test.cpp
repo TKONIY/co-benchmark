@@ -170,7 +170,7 @@ static void pthread_ctx_switch_test_2(int thread_n, uint64_t switch_n) {
 static void pthread_long_callback_test(int thread_n) {
   // TODO
 }
-// pthread end
+
 Benchmark benchmark{
     pthread_create_join_test,  pthread_loop_test_1,       pthread_loop_test_2,
     pthread_ctx_switch_test_1, pthread_ctx_switch_test_2, pthread_long_callback_test,

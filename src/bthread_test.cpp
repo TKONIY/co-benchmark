@@ -28,6 +28,7 @@ static void bthread_create_join_test(int thread_n) {
   auto join_us = std::chrono::duration_cast<us>(join_duration).count();
   fmt::print("join {} threads, cost {} us\n", thread_n, join_us);
 }
+
 static void bthread_loop_test_1(int thread_n) {
   // For each element in data vector
   // create a thread to do multiply
@@ -54,6 +55,7 @@ static void bthread_loop_test_1(int thread_n) {
       "launch {} threads to multiply a vector to a scalar, end-to-end cost {} us\n",
       thread_n, run_us);
 }
+
 static void bthread_loop_test_2(int thread_n) {
   // For each element in data vector
   // create a thread to do multiply
