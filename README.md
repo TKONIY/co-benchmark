@@ -15,6 +15,9 @@ I'm not going to argue with anyone about the fucking confusing concepts of threa
 | ctx switch single-thread | ✅       | ✅       | ✅     | ✅       | ✅     |
 | ctx switch multi-thread  | ✅       | ✅       | 🈚️     | 🈚️       | ✅     |
 ### Library Specific Benchmarks
+#### Start Urgent Test
+* bthread: `bthread_start_urgent`
+* libgo: `go` and `yield`
 ## Getting Start
 > ⚠️ Since I haven't figured out how to write the CMakeLists.txt for projects with brpc, current build configurations of this project are taken from `incubator-brpc/example/echo_c++`. Thus this project can only be place on the same dir. This will be fix as soon as possible.
 > 
