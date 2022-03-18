@@ -23,7 +23,7 @@ static void libgo_create_join_test(int coroutine_n) {
   fmt::print("create {} threads, cost {} us\n", coroutine_n, create_us);
 
   // ignore new schedule thread's overhead
-  std::thread([]() { co_sched.Start(Utils::n_cpu()); }).detach();
+  std::thread([]() { co_sched.Start(std::thread::hardware_concurrency()); }).detach();
 
   auto ch_before = clk::now();
 
@@ -54,7 +54,7 @@ static void libgo_loop_test_1(int coroutine_n) {
     };
   };
 
-  std::thread([]() { co_sched.Start(/*default*/); }).detach();
+  std::thread([]() { co_sched.Start(/*default = (1, 0)*/); }).detach();
   auto run_before = clk::now();
 
   int join;
@@ -66,11 +66,11 @@ static void libgo_loop_test_1(int coroutine_n) {
   auto run_duration = run_after - run_before;
   auto run_us = std::chrono::duration_cast<us>(run_duration).count();
 
-  assert(datas == results);
-
   fmt::print(
       "launch {} threads to multiply a vector to a scalar, end-to-end cost {} us\n",
       coroutine_n, run_us);
+
+  assert(datas == results);
 }
 
 static void libgo_loop_test_2(int coroutine_n) { // For each element in data vector
@@ -83,12 +83,12 @@ static void libgo_loop_test_2(int coroutine_n) { // For each element in data vec
   co_chan<int> ch;
   for (int i = 0; i < coroutine_n; ++i) {
     go[=, &datas]() {
-      Utils::f_mul_1000000(&datas[i]);
+      Utils::f_mul_1M(&datas[i]);
       ch << 1;
     };
   };
 
-  std::thread([]() { co_sched.Start(Utils::n_cpu()); }).detach();
+  std::thread([]() { co_sched.Start(std::thread::hardware_concurrency()); }).detach();
   auto run_before = clk::now();
 
   int join;
@@ -100,15 +100,14 @@ static void libgo_loop_test_2(int coroutine_n) { // For each element in data vec
   auto run_duration = run_after - run_before;
   auto run_us = std::chrono::duration_cast<us>(run_duration).count();
 
-  assert(datas == results);
-
   fmt::print("launch {} coroutine on {} threads to multiply a vector to a scalar, "
              "end-to-end cost {} us\n",
-             coroutine_n, Utils::n_cpu(), run_us);
+             coroutine_n, std::thread::hardware_concurrency(), run_us);
+
+  assert(datas == results);
 }
 
 static void libgo_ctx_switch_test_1(uint64_t switch_n) {
-  using time_point_t = decltype(clk::now());
   auto switch_before = new time_point_t{};
   auto switch_after = new time_point_t{};
 
@@ -160,7 +159,7 @@ static void libgo_ctx_switch_test_2(int coroutine_n, uint64_t switch_n) {
     };
   }
 
-  std::thread([]() { co_sched.Start(Utils::n_cpu()); }).detach();
+  std::thread([]() { co_sched.Start(std::thread::hardware_concurrency()); }).detach();
 
   int join;
   for (int i = 0; i < coroutine_n; ++i) {
@@ -179,11 +178,64 @@ static void libgo_ctx_switch_test_2(int coroutine_n, uint64_t switch_n) {
   delete[] switch_afters;
 }
 
-static void libgo_long_callback_test(int coroutine_n) {
-  // TODO 测试长尾
+static void libgo_start_urgent_test(int coroutine_n) {
+  // This test is to emulate bthread_start_urgent. The worker routine starts a new
+  // urgent routine an let it run on current thread. Then the worker are appending
+  // to current thread's processing queue. If the urgent routine blocks or spending
+  // long time. Then the work steal scheduler will steal worker to another thread
+  // !! This won't actually have the same behaviour with bthread.
+  //    bthread_start_urgent() swap the urgent bthread in and add worker bthread to
+  //    processing queue. But go-and-co_yield just add the urgent routine and worker
+  //    routine to processing queue. They behave the same only when the processing
+  //    queue is empty.
+
+  auto urgent_before = new time_point_t{};
+  auto urgent_start = new time_point_t{};
+  auto urgent_after = new time_point_t{};
+
+  co_chan<int> ch;
+  go[=]() {
+    // fmt::print("worker tid: {}\n", pthread_self());
+    *urgent_before = clk::now();
+
+    go[=]() {
+      *urgent_start = clk::now();
+      // fmt::print("urgent tid: {}\n", pthread_self());
+      // 1. Block the thread. Enable this only when libco compiled as no-hook
+      // sleep(2);
+      // 2. Use CPU for long calculation
+      int i = 10;
+      Utils::f_mul_1M(&i);
+      fmt::print("{}\n", i);
+
+      ch << 1;
+    };
+    co_yield;
+
+    *urgent_after = clk::now();
+    // fmt::print("worker tid: {}\n", pthread_self());
+
+    ch << 1;
+  };
+
+  std::thread([]() { co_sched.Start(2); }).detach();
+
+  int join;
+  ch >> join, ch >> join;
+
+  auto urgent_duration = *urgent_start - *urgent_before;
+  auto worker_duration = *urgent_after - *urgent_before;
+  auto urgent_us = std::chrono::duration_cast<us>(urgent_duration).count();
+  auto worker_us = std::chrono::duration_cast<us>(worker_duration).count();
+  fmt::print("cost {} us to schedule a new libgo::routine in current pthread.\n", urgent_us);
+  fmt::print("cost {} us to schedule current libgo::routine to another pthread.\n", worker_us);
+
+  delete urgent_before;
+  delete urgent_start;
+  delete urgent_after;
 }
 
 Benchmark benchmark{
     libgo_create_join_test,  libgo_loop_test_1,       libgo_loop_test_2,
-    libgo_ctx_switch_test_1, libgo_ctx_switch_test_2, libgo_long_callback_test,
+    libgo_ctx_switch_test_1, libgo_ctx_switch_test_2, libgo_start_urgent_test,
 };

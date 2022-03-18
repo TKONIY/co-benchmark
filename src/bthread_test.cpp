@@ -68,7 +68,7 @@ static void bthread_loop_test_2(int thread_n) {
 
   auto run_before = clk::now();
   for (int i = 0; i < thread_n; ++i) {
-    bthread_start_background(&threads[i], nullptr, Utils::f_mul_1000000, &datas[i]);
+    bthread_start_background(&threads[i], nullptr, Utils::f_mul_1M, &datas[i]);
   }
   for (auto tid : threads) {
     bthread_join(tid, NULL);
@@ -85,8 +85,6 @@ static void bthread_loop_test_2(int thread_n) {
 }
 
 // ctx switch tests
-using time_point_t = decltype(clk::now());
-
 struct args_ctx_switch_t {
   int thread_i;
   uint64_t switch_n;
@@ -180,9 +178,14 @@ struct arg_worker_t {
 static void *f_urgent(void *arg) {
   // fmt::print("urgent tid: {}\n", pthread_self());
   auto urgent_start = clk::now();
-  // Block the pthread, then scheduler will steal bthread's on current TaskGroup to
+
+  // 1. Block the pthread, then scheduler will steal bthread's on current TaskGroup to
   // other pthread. Stealing won't happened if f_urgent finish quickly.
-  sleep(1);
+  // sleep(1);
+  // 2. We can also add a long CPU task to the bthread
+  int i = 10;
+  Utils::f_mul_1M(&i);
+  fmt::print("{}\n", i);
 
   static_cast<arg_urgent_t *>(arg)->urgent_start = urgent_start;
   return nullptr;

@@ -50,11 +50,11 @@ static void pthread_loop_test_1(int thread_n) {
   auto run_duration = run_after - run_before;
   auto run_us = std::chrono::duration_cast<us>(run_duration).count();
 
-  assert(datas == results);
-
   fmt::print(
       "launch {} threads to multiply a vector to a scalar, end-to-end cost {} us\n",
       thread_n, run_us);
+
+  assert(datas == results);
 }
 
 static void pthread_loop_test_2(int thread_n) {
@@ -67,7 +67,7 @@ static void pthread_loop_test_2(int thread_n) {
 
   auto run_before = clk::now();
   for (int i = 0; i < thread_n; ++i) {
-    pthread_create(&threads[i], nullptr, Utils::f_mul_1000000, &datas[i]);
+    pthread_create(&threads[i], nullptr, Utils::f_mul_1M, &datas[i]);
   }
   for (auto tid : threads) {
     pthread_join(tid, nullptr);
@@ -76,16 +76,14 @@ static void pthread_loop_test_2(int thread_n) {
   auto run_duration = run_after - run_before;
   auto run_us = std::chrono::duration_cast<us>(run_duration).count();
 
-  // assert(datas == results);
-
   fmt::print(
       "launch {} threads to multiply a vector to a scalar, end-to-end cost {} us\n",
       thread_n, run_us);
+
+  assert(datas == results);
 }
 
 // ctx switch tests
-using time_point_t = decltype(clk::now());
-
 struct args_ctx_switch_t {
   int thread_i;
   uint64_t switch_n;

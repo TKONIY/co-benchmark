@@ -6,6 +6,7 @@ using ms = std::chrono::milliseconds;
 using us = std::chrono::microseconds;
 using ns = std::chrono::nanoseconds;
 using s = std::chrono::seconds;
+using time_point_t = decltype(clk::now());
 
 struct Utils {
   static void *f_null(void *) { return nullptr; }
@@ -14,25 +15,22 @@ struct Utils {
     *static_cast<int *>(value) *= 10;
     return nullptr;
   }
-  static void *f_mul_1000000(void *value) {
+
+  static void *f_mul_1M(void *value) {
     auto value_int = *static_cast<int *>(value);
-    for (int i = 0; i < 1000000; ++i) {
+    for (uint64_t i = 0; i < 1000000; ++i) {
       value_int = value_int * 10;
     }
     *static_cast<int *>(value) = value_int;
     return nullptr;
   }
-  
+
   template <typename T> static T op_mul_1(T value) { return value * 10; }
   template <typename T> static T op_mul_1000000(T value) {
     for (int i = 0; i < 1000000; ++i) {
       value = value * 10;
     }
     return value;
-  }
-
-  static int n_cpu() {
-    return get_nprocs();
   }
 };
 

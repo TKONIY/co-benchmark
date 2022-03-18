@@ -57,11 +57,11 @@ static void libco_loop_test_1(int coroutine_n) {
   auto run_duration = run_after - run_before;
   auto run_us = std::chrono::duration_cast<us>(run_duration).count();
 
-  assert(datas == results);
-
   fmt::print(
       "launch {} coroutines to multiply a vector to a scalar, end-to-end cost {} us\n",
       coroutine_n, run_us);
+
+  assert(datas == results);
 
   // TODO: need release
 }
@@ -76,7 +76,7 @@ static void libco_loop_test_2(int coroutine_n) {
 
   auto run_before = clk::now();
   for (int i = 0; i < coroutine_n; ++i) {
-    co_create(&coroutines[i], nullptr, Utils::f_mul_1000000, &datas[i]);
+    co_create(&coroutines[i], nullptr, Utils::f_mul_1M, &datas[i]);
     // co_resume(coroutines[i]);
 
     // @notes:
@@ -90,11 +90,12 @@ static void libco_loop_test_2(int coroutine_n) {
   auto run_duration = run_after - run_before;
   auto run_us = std::chrono::duration_cast<us>(run_duration).count();
 
-  assert(datas == results);
-
   fmt::print(
       "launch {} coroutines to multiply a vector to a scalar, end-to-end cost {} us\n",
       coroutine_n, run_us);
+
+  assert(datas == results);
+
 }
 
 static void *f_switch(void *switch_n) {
