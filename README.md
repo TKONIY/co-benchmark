@@ -1,5 +1,5 @@
-# Thread and Coroutines Benchmark
-I'm not going to argue with anyone about the fucking confusing concepts of thread, coroutine and fiber. The following articles will be devided by stackful and stackless. Futher symmetric and asymmetric routines will also be distinguished.
+# Coroutines Benchmark
+I'm not going to argue with anyone about the fucking confusing concepts of thread, coroutine and fiber. I call them all coroutines. They can be classified by stack, scheduler or threads.
 ## TODO
 - [ ] Rewrite CMakeLists.txt to find brpc in system library.
 - [ ] Design benchmark for stackful and stackless seperately.
