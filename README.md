@@ -5,7 +5,7 @@ I'm not going to argue with anyone about the fucking confusing concepts of threa
 - [ ] Design benchmark for stackful and stackless seperately.
 ## Benchmarks
 ### Common Benchmarks
-|                          | bthread | pthread | libco | cpp20co | libgo |
+|                          | pthread | bthread | libco | cpp20co | libgo |
 | ------------------------ | ------- | ------- | ----- | ------- | ----- |
 | create                   | ✅       | ✅       | ✅     | ✅       | ✅     |
 | join                     | ✅       | ✅       | 🈚️     | 🈚️       | ✅     |
